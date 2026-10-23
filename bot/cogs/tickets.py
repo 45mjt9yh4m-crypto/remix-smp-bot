@@ -1,9 +1,9 @@
 """Ticket di supporto del Remix SMP.
 
-Il pannello ha un bottone per ogni tipo di ticket; ognuno apre un canale privato tra il giocatore
-e lo staff, con domande guidate. Lo staff può prendere in carico il ticket e chiuderlo.
+Il pannello ha un bottone per ogni tipo di ticket. Il bottone apre un modulo obbligatorio
+(nick, Java o Bedrock, domande del tipo scelto); solo dopo l'invio nasce il canale privato
+tra il giocatore e lo staff. Lo staff può prendere in carico il ticket e chiuderlo con un tocco.
 """
-import asyncio
 import re
 from dataclasses import dataclass
 
@@ -14,6 +14,15 @@ from discord.ext import commands
 from bot import brand
 
 TOPIC_PREFIX = "ticket-owner:"
+EDITIONS = ("Java", "Bedrock")
+
+
+@dataclass(frozen=True)
+class Question:
+    label: str
+    placeholder: str
+    long: bool = False
+    required: bool = True
 
 
 @dataclass(frozen=True)
@@ -24,17 +33,24 @@ class TicketKind:
     style: discord.ButtonStyle
     prefix: str
     color: discord.Color
-    questions: tuple[str, ...]
+    questions: tuple[Question, ...]  # al massimo 3: il modulo ha anche nick ed edizione
 
 
 KINDS = (
-    TicketKind("support", "Supporto", "🛠️", discord.ButtonStyle.primary, "supporto", brand.TEAL,
-               ("Qual è il tuo nick in gioco?", "Di cosa hai bisogno? Spiegalo con più dettagli possibile.")),
-    TicketKind("report", "Segnala un giocatore", "🚨", discord.ButtonStyle.danger, "segnalazione", brand.RED,
-               ("Qual è il nick del giocatore che segnali?", "Cosa ha fatto, e quando?", "Hai prove? Allega screenshot o video.")),
-    TicketKind("bug", "Bug", "🐛", discord.ButtonStyle.secondary, "bug", brand.ORANGE,
-               ("Cosa succede, e cosa dovrebbe succedere invece?", "Dove e quando è capitato? (coordinate, mondo, orario)", "Se puoi, allega uno screenshot.")),
+    TicketKind("support", "Supporto", "🛠️", discord.ButtonStyle.primary, "supporto", brand.TEAL, (
+        Question("Di cosa hai bisogno?", "Spiegalo con più dettagli possibile", long=True),
+    )),
+    TicketKind("report", "Segnala un giocatore", "🚨", discord.ButtonStyle.danger, "segnalazione", brand.RED, (
+        Question("Nick del giocatore che segnali", "Es. Steve123"),
+        Question("Cosa ha fatto, e quando?", "Racconta cosa è successo", long=True),
+        Question("Prove", "Link a screenshot o video (puoi allegarli anche dopo in chat)", required=False),
+    )),
+    TicketKind("bug", "Bug", "🐛", discord.ButtonStyle.secondary, "bug", brand.ORANGE, (
+        Question("Cosa succede?", "Cosa succede, e cosa dovrebbe succedere invece", long=True),
+        Question("Dove e quando?", "Coordinate, mondo, orario", required=False),
+    )),
 )
+assert all(len(kind.questions) <= 3 for kind in KINDS)
 
 
 def ticket_channel_name(username: str, prefix: str = "ticket") -> str:
@@ -73,11 +89,42 @@ class TicketPanel(discord.ui.View):
 
     def opener(self, kind: TicketKind):
         async def callback(interaction: discord.Interaction) -> None:
-            await self.open_ticket(interaction, kind)
+            existing = find_open_ticket(interaction.guild, interaction.user.id)
+            if existing:
+                await interaction.response.send_message(f"Hai già un ticket aperto: {existing.mention}", ephemeral=True)
+                return
+            await interaction.response.send_modal(TicketForm(self.bot, kind))
         return callback
 
-    async def open_ticket(self, interaction: discord.Interaction, kind: TicketKind) -> None:
-        guild, user, config = interaction.guild, interaction.user, self.bot.config
+
+class TicketForm(discord.ui.Modal):
+    """Il modulo da compilare per forza prima che il ticket venga creato."""
+
+    def __init__(self, bot: commands.Bot, kind: TicketKind):
+        super().__init__(title=f"{kind.label} · Remix SMP"[:45])
+        self.bot = bot
+        self.kind = kind
+        self.nick = discord.ui.TextInput(placeholder="Il tuo nome in Minecraft", min_length=3, max_length=32)
+        self.edition = discord.ui.Select(
+            placeholder="Scegli Java o Bedrock",
+            options=[discord.SelectOption(label=edition, value=edition) for edition in EDITIONS],
+        )
+        self.answers = [
+            discord.ui.TextInput(
+                style=discord.TextStyle.paragraph if question.long else discord.TextStyle.short,
+                placeholder=question.placeholder[:100],
+                required=question.required,
+                max_length=1000 if question.long else 200,
+            )
+            for question in kind.questions
+        ]
+        self.add_item(discord.ui.Label(text="Il tuo nick in gioco", component=self.nick))
+        self.add_item(discord.ui.Label(text="Con cosa giochi?", component=self.edition))
+        for question, answer in zip(kind.questions, self.answers):
+            self.add_item(discord.ui.Label(text=question.label, component=answer))
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        guild, user, config, kind = interaction.guild, interaction.user, self.bot.config, self.kind
         existing = find_open_ticket(guild, user.id)
         if existing:
             await interaction.response.send_message(f"Hai già un ticket aperto: {existing.mention}", ephemeral=True)
@@ -100,15 +147,17 @@ class TicketPanel(discord.ui.View):
             topic=f"{TOPIC_PREFIX}{user.id} · {kind.label}",
             reason=f"Ticket {kind.label} aperto da {user}",
         )
-        questions = "\n".join(f"**{number}.** {question}" for number, question in enumerate(kind.questions, 1))
         embed = brand.embed(
             f"{kind.emoji} {kind.label}",
-            f"Ciao {user.mention}, benvenuto nel supporto del **Remix SMP**!\n"
-            f"Per aiutarti più in fretta, rispondi a queste domande:\n\n{questions}\n\n"
-            "Lo staff ti risponderà il prima possibile.",
+            f"Ticket aperto da {user.mention}. Lo staff ti risponderà il prima possibile:\n"
+            "intanto puoi aggiungere dettagli o allegare screenshot qui sotto.",
             kind.color,
             thumbnail=user.display_avatar.url,
         )
+        embed.add_field(name="🎮 Nick", value=f"`{self.nick.value.strip()}`")
+        embed.add_field(name="🧩 Edizione", value=self.edition.values[0])
+        for question, answer in zip(kind.questions, self.answers):
+            embed.add_field(name=question.label, value=answer.value.strip() or "—", inline=False)
         await channel.send(
             content=" ".join([user.mention, *(role.mention for role in staff_roles)]),
             embed=embed,
@@ -138,14 +187,7 @@ class TicketControls(discord.ui.View):
         if not (is_owner or is_staff(interaction.user, channel, self.bot.config.staff_role_ids)):
             await interaction.response.send_message("Solo chi ha aperto il ticket o lo staff può chiuderlo.", ephemeral=True)
             return
-        embed = brand.embed(
-            "🔒 Ticket chiuso",
-            f"Chiuso da {interaction.user.mention}. Il canale verrà eliminato tra 5 secondi.\nGrazie per aver contattato lo staff del Remix SMP!",
-            brand.NAVY,
-            thumbnail=None,
-        )
-        await interaction.response.send_message(embed=embed, files=brand.files(embed))
-        await asyncio.sleep(5)
+        await interaction.response.defer()
         await channel.delete(reason=f"Ticket chiuso da {interaction.user}")
 
 
@@ -164,7 +206,7 @@ class Tickets(commands.Cog):
         kinds = "\n".join(f"{kind.emoji} **{kind.label}**" for kind in KINDS)
         embed = brand.embed(
             "🎫 Supporto Remix SMP",
-            "Hai bisogno dello staff? Scegli il tipo di richiesta qui sotto:\n\n"
+            "Hai bisogno dello staff? Scegli il tipo di richiesta qui sotto e compila il modulo:\n\n"
             f"{kinds}\n\n"
             "Si aprirà un canale privato visibile solo a te e allo staff.",
             brand.TEAL,

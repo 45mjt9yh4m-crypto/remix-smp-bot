@@ -7,7 +7,7 @@ from discord.ext import commands
 from bot.brand import ASSETS
 from bot.config import Config, load_config
 
-COGS = ("bot.cogs.status", "bot.cogs.moderation", "bot.cogs.tickets")
+COGS = ("bot.cogs.status", "bot.cogs.moderation", "bot.cogs.tickets", "bot.cogs.dashboard")
 
 
 class RemixBot(commands.Bot):

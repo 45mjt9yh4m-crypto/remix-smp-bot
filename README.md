@@ -8,7 +8,8 @@ Bot Discord per il server Minecraft **Remix SMP**, scritto in Python con `discor
 | `/kick`, `/ban` | chi può espellere o bannare | Espelle o banna un utente, con motivo facoltativo |
 | `/timeout`, `/untimeout` | chi può silenziare | Silenzia un utente per N minuti, o toglie il timeout |
 | `/clear` | chi può gestire i messaggi | Cancella gli ultimi 1–100 messaggi del canale |
-| `/ticket-panel` | admin | Pubblica il pannello ticket con tre bottoni: 🛠️ Supporto, 🚨 Segnala un giocatore, 🐛 Bug |
+| `/ticket-panel` | admin | Pubblica il pannello ticket con tre bottoni: 🛠️ Supporto, 🚨 Segnala un giocatore, 🐛 Bug. Ogni bottone apre un modulo obbligatorio (nick, Java/Bedrock, domande) prima di creare il ticket |
+| `/dashboard-setup` | admin | Crea `📢・dashboard`, canale privato per proprietario e manager, con il pannello per far mandare al bot messaggi personalizzati in qualsiasi canale |
 
 Lo stato del bot ("12/50 online su Remix SMP") si aggiorna da solo ogni 2 minuti.
 
@@ -44,6 +45,7 @@ Copia `.env.example` in un file chiamato `.env` e compila i campi:
 - `MC_ADDRESS`: l'IP del server Minecraft, ad esempio `play.remixsmp.it` o `1.2.3.4:25565`
 - `STAFF_ROLE_ID`: i ruoli staff separati da virgola (es. `111,222,333`); vedono tutti i ticket e ricevono una menzione quando ne viene aperto uno
 - `TICKET_CATEGORY_ID`: la categoria in cui creare i canali ticket (facoltativo)
+- `MANAGER_ROLE_ID`: i ruoli che possono usare la dashboard dei messaggi, separati da virgola (il proprietario e gli amministratori possono sempre)
 - `COMING_SOON`: metti `1` finché il server non è aperto. Il bot mostra "🚀 Apertura a breve!" invece di "offline". Il giorno del lancio cancellala.
 
 ## 3. Mettilo online (hosting gratuito)

@@ -9,6 +9,7 @@ DEFAULTS = {
     "GUILD_ID": "1359467339816370270",
     "MC_ADDRESS": "remixsmp.net",  # il giorno dell'apertura: aggiungere ":porta" se non è 25565
     "STAFF_ROLE_ID": "1457200870046302489,1490482020969873479,1440015751028281475,1473345415737905235",
+    "MANAGER_ROLE_ID": "1457200870046302489",  # chi può usare la dashboard dei messaggi (oltre al proprietario)
     "TICKET_CATEGORY_ID": "",
     "COMING_SOON": "1",  # il giorno dell'apertura: mettere "0"
 }
@@ -39,6 +40,7 @@ class Config:
     mc_address: str
     staff_role_ids: tuple[int, ...]
     ticket_category_id: int | None
+    manager_role_ids: tuple[int, ...] = ()
     coming_soon: bool = False
 
 
@@ -54,4 +56,5 @@ def load_config() -> Config:
         staff_role_ids=_int_list(_env("STAFF_ROLE_ID")),
         ticket_category_id=_int_or_none(_env("TICKET_CATEGORY_ID")),
         coming_soon=_flag(_env("COMING_SOON")),
+        manager_role_ids=_int_list(_env("MANAGER_ROLE_ID")),
     )
