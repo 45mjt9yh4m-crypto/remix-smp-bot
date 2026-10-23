@@ -1,4 +1,7 @@
-"""Stato del server Minecraft: comando /status e attività del bot aggiornata da sola."""
+"""Stato del server Minecraft: comando /status e attività del bot aggiornata da sola.
+
+Con COMING_SOON attivo il server non viene interrogato e il bot annuncia l'apertura imminente.
+"""
 import logging
 
 import discord
@@ -22,9 +25,10 @@ class Status(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.address = bot.config.mc_address
+        self.coming_soon = bot.config.coming_soon
 
     async def cog_load(self) -> None:
-        if self.address:
+        if self.address or self.coming_soon:
             self.update_presence.start()
 
     async def cog_unload(self) -> None:
@@ -36,6 +40,9 @@ class Status(commands.Cog):
 
     @tasks.loop(minutes=2)
     async def update_presence(self) -> None:
+        if self.coming_soon:
+            await self.bot.change_presence(status=discord.Status.online, activity=discord.Game("🚀 Apertura a breve!"))
+            return
         try:
             status = await self.fetch()
             activity = discord.Game(f"{status.players.online}/{status.players.max} online su Remix SMP")
@@ -50,6 +57,16 @@ class Status(commands.Cog):
 
     @app_commands.command(name="status", description="Mostra lo stato del server Minecraft Remix SMP")
     async def status(self, interaction: discord.Interaction) -> None:
+        if self.coming_soon:
+            embed = discord.Embed(
+                title="Remix SMP",
+                description="🚀 **Apertura a breve!**\nIl server non è ancora aperto: resta sintonizzato per la data di lancio.",
+                color=discord.Color.gold(),
+            )
+            if self.address:
+                embed.add_field(name="IP", value=f"`{self.address}`")
+            await interaction.response.send_message(embed=embed)
+            return
         if not self.address:
             await interaction.response.send_message("MC_ADDRESS non è configurato.", ephemeral=True)
             return

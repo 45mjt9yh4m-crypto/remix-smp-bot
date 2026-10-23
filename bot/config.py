@@ -10,6 +10,10 @@ def _int_or_none(value: str | None) -> int | None:
     return int(value) if value else None
 
 
+def _flag(value: str | None) -> bool:
+    return (value or "").strip().lower() in {"1", "true", "yes", "si", "sì", "on"}
+
+
 def _int_list(value: str | None) -> tuple[int, ...]:
     return tuple(int(part) for part in (value or "").replace(" ", "").split(",") if part)
 
@@ -21,6 +25,7 @@ class Config:
     mc_address: str
     staff_role_ids: tuple[int, ...]
     ticket_category_id: int | None
+    coming_soon: bool = False
 
 
 def load_config() -> Config:
@@ -34,4 +39,5 @@ def load_config() -> Config:
         mc_address=os.getenv("MC_ADDRESS", "").strip(),
         staff_role_ids=_int_list(os.getenv("STAFF_ROLE_ID")),
         ticket_category_id=_int_or_none(os.getenv("TICKET_CATEGORY_ID")),
+        coming_soon=_flag(os.getenv("COMING_SOON")),
     )
