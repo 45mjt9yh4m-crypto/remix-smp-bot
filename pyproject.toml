@@ -1,0 +1,14 @@
+[project]
+name = "remix-smp-bot"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["discord.py==2.7.1", "mcstatus==14.2.0", "python-dotenv==1.1.1"]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
