@@ -34,7 +34,7 @@ Copia `.env.example` in un file chiamato `.env` e compila i campi:
 - `DISCORD_TOKEN`: il token del bot (obbligatorio)
 - `GUILD_ID`: l'ID del tuo server Discord, così i comandi compaiono subito
 - `MC_ADDRESS`: l'IP del server Minecraft, ad esempio `play.remixsmp.it` o `1.2.3.4:25565`
-- `STAFF_ROLE_ID`: il ruolo staff, che vede tutti i ticket e riceve una menzione quando ne viene aperto uno
+- `STAFF_ROLE_ID`: i ruoli staff separati da virgola (es. `111,222,333`); vedono tutti i ticket e ricevono una menzione quando ne viene aperto uno
 - `TICKET_CATEGORY_ID`: la categoria in cui creare i canali ticket (facoltativo)
 
 ## 3. Mettilo online (hosting gratuito)

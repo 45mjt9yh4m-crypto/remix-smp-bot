@@ -5,7 +5,7 @@ from main import COGS, RemixBot
 
 
 def test_all_cogs_load_and_register_commands():
-    config = Config(token="x", guild_id=None, mc_address="", staff_role_id=None, ticket_category_id=None)
+    config = Config(token="x", guild_id=None, mc_address="", staff_role_ids=(), ticket_category_id=None)
 
     async def run():
         bot = RemixBot(config)

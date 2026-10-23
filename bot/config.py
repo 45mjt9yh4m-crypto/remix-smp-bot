@@ -10,12 +10,16 @@ def _int_or_none(value: str | None) -> int | None:
     return int(value) if value else None
 
 
+def _int_list(value: str | None) -> tuple[int, ...]:
+    return tuple(int(part) for part in (value or "").replace(" ", "").split(",") if part)
+
+
 @dataclass(frozen=True)
 class Config:
     token: str
     guild_id: int | None
     mc_address: str
-    staff_role_id: int | None
+    staff_role_ids: tuple[int, ...]
     ticket_category_id: int | None
 
 
@@ -28,6 +32,6 @@ def load_config() -> Config:
         token=token,
         guild_id=_int_or_none(os.getenv("GUILD_ID")),
         mc_address=os.getenv("MC_ADDRESS", "").strip(),
-        staff_role_id=_int_or_none(os.getenv("STAFF_ROLE_ID")),
+        staff_role_ids=_int_list(os.getenv("STAFF_ROLE_ID")),
         ticket_category_id=_int_or_none(os.getenv("TICKET_CATEGORY_ID")),
     )

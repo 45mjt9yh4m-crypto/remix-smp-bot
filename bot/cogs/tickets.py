@@ -48,9 +48,9 @@ class TicketPanel(discord.ui.View):
             user: discord.PermissionOverwrite(view_channel=True, send_messages=True, attach_files=True, read_message_history=True),
             guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_channels=True),
         }
-        staff = guild.get_role(config.staff_role_id) if config.staff_role_id else None
-        if staff:
-            overwrites[staff] = discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True)
+        staff_roles = [role for role in map(guild.get_role, config.staff_role_ids) if role]
+        for role in staff_roles:
+            overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True)
         category = guild.get_channel(config.ticket_category_id) if config.ticket_category_id else None
 
         channel = await guild.create_text_channel(
@@ -66,7 +66,7 @@ class TicketPanel(discord.ui.View):
             "Quando hai finito premi **Chiudi ticket**.",
             color=discord.Color.blurple(),
         )
-        await channel.send(content=staff.mention if staff else None, embed=embed, view=TicketControls())
+        await channel.send(content=" ".join(role.mention for role in staff_roles) or None, embed=embed, view=TicketControls())
         await interaction.response.send_message(f"Ticket creato: {channel.mention}", ephemeral=True)
 
 

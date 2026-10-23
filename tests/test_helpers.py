@@ -1,6 +1,6 @@
 from bot.cogs.status import format_players
 from bot.cogs.tickets import ticket_channel_name, ticket_owner_id
-from bot.config import _int_or_none
+from bot.config import _int_list, _int_or_none
 
 
 def test_ticket_channel_name_is_discord_safe():
@@ -26,3 +26,8 @@ def test_int_or_none():
     assert _int_or_none("") is None
     assert _int_or_none(None) is None
     assert _int_or_none(" 42 ") == 42
+
+
+def test_int_list():
+    assert _int_list(None) == ()
+    assert _int_list("1, 22,333,") == (1, 22, 333)
