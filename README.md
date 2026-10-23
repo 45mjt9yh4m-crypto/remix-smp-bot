@@ -8,9 +8,14 @@ Bot Discord per il server Minecraft **Remix SMP**, scritto in Python con `discor
 | `/kick`, `/ban` | chi può espellere o bannare | Espelle o banna un utente, con motivo facoltativo |
 | `/timeout`, `/untimeout` | chi può silenziare | Silenzia un utente per N minuti, o toglie il timeout |
 | `/clear` | chi può gestire i messaggi | Cancella gli ultimi 1–100 messaggi del canale |
-| `/ticket-panel` | admin | Pubblica il pannello con il bottone **Apri un ticket** |
+| `/ticket-panel` | admin | Pubblica il pannello ticket con tre bottoni: 🛠️ Supporto, 🚨 Segnala un giocatore, 🐛 Bug |
 
 Lo stato del bot ("12/50 online su Remix SMP") si aggiorna da solo ogni 2 minuti.
+
+Tutti i messaggi hanno la grafica del Remix SMP: logo, colori del brand e piè di pagina `Remix SMP • remixsmp.net`
+(immagini in `assets/`, colori in `bot/brand.py`). I messaggi di moderazione mostrano la foto profilo dell'utente
+e l'utente viene avvisato in privato. Nei ticket lo staff può premere **Prendi in carico**.
+Al primo avvio il bot si imposta da solo il logo come foto profilo.
 
 ## 1. Crea il bot su Discord (si fa tutto da Safari)
 

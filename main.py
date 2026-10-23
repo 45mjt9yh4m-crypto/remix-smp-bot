@@ -4,6 +4,7 @@ import logging
 import discord
 from discord.ext import commands
 
+from bot.brand import ASSETS
 from bot.config import Config, load_config
 
 COGS = ("bot.cogs.status", "bot.cogs.moderation", "bot.cogs.tickets")
@@ -30,6 +31,13 @@ class RemixBot(commands.Bot):
 
     async def on_ready(self) -> None:
         logging.info("Online come %s (id %s)", self.user, self.user.id)
+        if self.user.avatar is None:
+            # Al primo avvio il bot si mette da solo il logo del Remix SMP come foto profilo.
+            try:
+                await self.user.edit(avatar=(ASSETS / "avatar.png").read_bytes())
+                logging.info("Foto profilo impostata")
+            except discord.HTTPException as error:
+                logging.warning("Impossibile impostare la foto profilo: %s", error)
 
 
 def main() -> None:

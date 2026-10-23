@@ -9,6 +9,8 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from mcstatus import JavaServer
 
+from bot import brand
+
 log = logging.getLogger(__name__)
 
 
@@ -55,17 +57,24 @@ class Status(commands.Cog):
     async def before_update(self) -> None:
         await self.bot.wait_until_ready()
 
+    def coming_soon_embed(self) -> discord.Embed:
+        embed = brand.embed(
+            "🚀 Apertura a breve!",
+            "Il **Remix SMP** non è ancora aperto, ma manca poco.\n"
+            "Tieni d'occhio gli annunci per non perderti la data di lancio!",
+            brand.PURPLE,
+            thumbnail=None,
+            image="banner.png",
+        )
+        if self.address:
+            embed.add_field(name="🌐 IP", value=f"`{self.address}`")
+        return embed
+
     @app_commands.command(name="status", description="Mostra lo stato del server Minecraft Remix SMP")
     async def status(self, interaction: discord.Interaction) -> None:
         if self.coming_soon:
-            embed = discord.Embed(
-                title="Remix SMP",
-                description="🚀 **Apertura a breve!**\nIl server non è ancora aperto: resta sintonizzato per la data di lancio.",
-                color=discord.Color.gold(),
-            )
-            if self.address:
-                embed.add_field(name="IP", value=f"`{self.address}`")
-            await interaction.response.send_message(embed=embed)
+            embed = self.coming_soon_embed()
+            await interaction.response.send_message(embed=embed, files=brand.files(embed))
             return
         if not self.address:
             await interaction.response.send_message("MC_ADDRESS non è configurato.", ephemeral=True)
@@ -74,16 +83,17 @@ class Status(commands.Cog):
         try:
             status = await self.fetch()
         except Exception:
-            embed = discord.Embed(title="Remix SMP", description="🔴 Il server è **offline**.", color=discord.Color.red())
-            await interaction.followup.send(embed=embed)
+            embed = brand.embed("🔴 Server offline", "Il **Remix SMP** al momento non è raggiungibile. Riprova tra poco!", brand.RED)
+            embed.add_field(name="🌐 IP", value=f"`{self.address}`")
+            await interaction.followup.send(embed=embed, files=brand.files(embed))
             return
         names = [p.name for p in (status.players.sample or [])]
-        embed = discord.Embed(title="Remix SMP", description="🟢 Il server è **online**!", color=discord.Color.green())
-        embed.add_field(name="Giocatori", value=format_players(status.players.online, status.players.max, names), inline=False)
-        embed.add_field(name="IP", value=f"`{self.address}`")
-        embed.add_field(name="Versione", value=status.version.name)
-        embed.add_field(name="Ping", value=f"{round(status.latency)} ms")
-        await interaction.followup.send(embed=embed)
+        embed = brand.embed("🟢 Server online", "Il **Remix SMP** è aperto: entra a giocare!", brand.GREEN)
+        embed.add_field(name="👥 Giocatori", value=format_players(status.players.online, status.players.max, names), inline=False)
+        embed.add_field(name="🌐 IP", value=f"`{self.address}`")
+        embed.add_field(name="🧩 Versione", value=status.version.name)
+        embed.add_field(name="📶 Ping", value=f"{round(status.latency)} ms")
+        await interaction.followup.send(embed=embed, files=brand.files(embed))
 
 
 async def setup(bot: commands.Bot) -> None:
