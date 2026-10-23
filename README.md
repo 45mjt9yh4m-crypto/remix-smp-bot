@@ -29,6 +29,9 @@ poi tieni premuto sull'elemento e scegli **Copia ID**.
 
 ## 2. Configurazione
 
+Server, IP, ruoli staff e "Apertura a breve" hanno già i valori del Remix SMP in `bot/config.py` (`DEFAULTS`):
+sull'hosting basta impostare `DISCORD_TOKEN`. Le variabili qui sotto servono solo per sostituire quei valori.
+
 Copia `.env.example` in un file chiamato `.env` e compila i campi:
 
 - `DISCORD_TOKEN`: il token del bot (obbligatorio)

@@ -36,3 +36,23 @@ def test_int_list():
 def test_flag():
     assert _flag("1") and _flag("true") and _flag(" Sì ")
     assert not _flag(None) and not _flag("") and not _flag("0") and not _flag("no")
+
+
+def test_defaults_and_overrides(monkeypatch):
+    from bot.config import load_config
+
+    monkeypatch.setattr("bot.config.load_dotenv", lambda: None)
+    monkeypatch.setenv("DISCORD_TOKEN", "x")
+    for name in ("GUILD_ID", "MC_ADDRESS", "STAFF_ROLE_ID", "TICKET_CATEGORY_ID", "COMING_SOON"):
+        monkeypatch.delenv(name, raising=False)
+    config = load_config()
+    assert config.guild_id == 1359467339816370270
+    assert config.mc_address == "remixsmp.net"
+    assert len(config.staff_role_ids) == 4
+    assert config.coming_soon is True
+
+    monkeypatch.setenv("MC_ADDRESS", "remixsmp.net:25570")
+    monkeypatch.setenv("COMING_SOON", "0")
+    config = load_config()
+    assert config.mc_address == "remixsmp.net:25570"
+    assert config.coming_soon is False
