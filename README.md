@@ -45,6 +45,7 @@ Copia `.env.example` in un file chiamato `.env` e compila i campi:
 - `MC_ADDRESS`: l'IP del server Minecraft, ad esempio `play.remixsmp.it` o `1.2.3.4:25565`
 - `STAFF_ROLE_ID`: i ruoli staff separati da virgola (es. `111,222,333`); vedono tutti i ticket e ricevono una menzione quando ne viene aperto uno
 - `TICKET_CATEGORY_ID`: la categoria in cui creare i canali ticket (facoltativo)
+- `TICKET_CATEGORY_NAME`: se non c'è l'ID, i ticket vanno nella prima categoria che contiene questa parola (predefinito `ticket`)
 - `MANAGER_ROLE_ID`: i ruoli che possono usare la dashboard dei messaggi, separati da virgola (il proprietario e gli amministratori possono sempre)
 - `COMING_SOON`: metti `1` finché il server non è aperto. Il bot mostra "🚀 Apertura a breve!" invece di "offline". Il giorno del lancio cancellala.
 

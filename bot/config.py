@@ -11,6 +11,7 @@ DEFAULTS = {
     "STAFF_ROLE_ID": "1457200870046302489,1490482020969873479,1440015751028281475,1473345415737905235",
     "MANAGER_ROLE_ID": "1457200870046302489",  # chi può usare la dashboard dei messaggi (oltre al proprietario)
     "TICKET_CATEGORY_ID": "",
+    "TICKET_CATEGORY_NAME": "ticket",  # senza ID, i ticket vanno nella prima categoria che contiene questa parola
     "COMING_SOON": "1",  # il giorno dell'apertura: mettere "0"
 }
 
@@ -40,6 +41,7 @@ class Config:
     mc_address: str
     staff_role_ids: tuple[int, ...]
     ticket_category_id: int | None
+    ticket_category_name: str = ""
     manager_role_ids: tuple[int, ...] = ()
     coming_soon: bool = False
 
@@ -55,6 +57,7 @@ def load_config() -> Config:
         mc_address=_env("MC_ADDRESS").strip(),
         staff_role_ids=_int_list(_env("STAFF_ROLE_ID")),
         ticket_category_id=_int_or_none(_env("TICKET_CATEGORY_ID")),
+        ticket_category_name=_env("TICKET_CATEGORY_NAME").strip(),
         coming_soon=_flag(_env("COMING_SOON")),
         manager_role_ids=_int_list(_env("MANAGER_ROLE_ID")),
     )

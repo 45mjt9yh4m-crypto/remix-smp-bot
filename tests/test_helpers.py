@@ -56,3 +56,23 @@ def test_defaults_and_overrides(monkeypatch):
     config = load_config()
     assert config.mc_address == "remixsmp.net:25570"
     assert config.coming_soon is False
+
+
+def test_find_ticket_category_by_name():
+    from types import SimpleNamespace
+
+    import discord
+
+    from bot.cogs.tickets import find_ticket_category
+
+    def category(name):
+        item = object.__new__(discord.CategoryChannel)
+        item.name = name
+        return item
+
+    general, tickets = category("💬 GENERAL"), category("ticket💳")
+    guild = SimpleNamespace(categories=[general, tickets], get_channel=lambda _id: None)
+    assert find_ticket_category(guild, None, "ticket") is tickets
+    assert find_ticket_category(guild, None, "TICKET") is tickets
+    assert find_ticket_category(guild, None, "assente") is None
+    assert find_ticket_category(guild, None, "") is None
