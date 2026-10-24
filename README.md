@@ -9,6 +9,7 @@ Bot Discord per il server Minecraft **Remix SMP**, scritto in Python con `discor
 | `/timeout`, `/untimeout` | chi può silenziare | Silenzia un utente per N minuti, o toglie il timeout |
 | `/clear` | chi può gestire i messaggi | Cancella gli ultimi 1–100 messaggi del canale |
 | `/ticket-panel` | admin | Pubblica il pannello ticket con tre bottoni: 🛠️ Supporto, 🚨 Segnala un giocatore, 🐛 Bug. Ogni bottone apre un modulo obbligatorio (nick, Java/Bedrock, domande) prima di creare il ticket |
+| `/parole aggiungi`, `/parole rimuovi`, `/parole lista` | chi può gestire il server | Filtro parole: i messaggi con parole vietate vengono cancellati e l'autore va in timeout (`FILTER_TIMEOUT_MINUTES`, predefinito 5). Lo staff con "Gestisci messaggi" non viene filtrato. Serve **Message Content Intent** attivo nel Developer Portal |
 | `/dashboard-setup` | admin | Crea `📢・dashboard`, canale privato per proprietario e manager, con il pannello per far mandare al bot messaggi personalizzati in qualsiasi canale |
 
 Lo stato del bot ("12/50 online su Remix SMP") si aggiorna da solo ogni 2 minuti.

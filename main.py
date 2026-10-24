@@ -8,12 +8,13 @@ from discord.ext import commands
 from bot.brand import ASSETS
 from bot.config import Config, load_config
 
-COGS = ("bot.cogs.status", "bot.cogs.moderation", "bot.cogs.tickets", "bot.cogs.dashboard")
+COGS = ("bot.cogs.status", "bot.cogs.moderation", "bot.cogs.tickets", "bot.cogs.dashboard", "bot.cogs.wordfilter")
 
 
 class RemixBot(commands.Bot):
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, message_content: bool = True):
         intents = discord.Intents.default()
+        intents.message_content = message_content  # serve al filtro parole
         super().__init__(command_prefix=commands.when_mentioned, intents=intents)
         self.config = config
 
@@ -54,7 +55,12 @@ def main() -> None:
     config = load_config()
     discord.utils.setup_logging(level=logging.INFO)
     logging.info("Versione del bot: %s", version())
-    RemixBot(config).run(config.token, log_handler=None)
+    try:
+        RemixBot(config).run(config.token, log_handler=None)
+    except discord.PrivilegedIntentsRequired:
+        # Senza "Message Content Intent" nel Developer Portal il bot parte lo stesso, ma il filtro parole non vede i messaggi.
+        logging.error("Attiva 'Message Content Intent' nel Developer Portal (Bot): il filtro parole resta spento fino ad allora.")
+        RemixBot(config, message_content=False).run(config.token, log_handler=None)
 
 
 if __name__ == "__main__":
