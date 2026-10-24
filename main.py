@@ -1,5 +1,6 @@
 """Avvio del bot Discord di Remix SMP: `python main.py`."""
 import logging
+import subprocess
 
 import discord
 from discord.ext import commands
@@ -40,9 +41,19 @@ class RemixBot(commands.Bot):
                 logging.warning("Impossibile impostare la foto profilo: %s", error)
 
 
+def version() -> str:
+    """Il commit di GitHub da cui gira il bot, per controllare che un aggiornamento sia arrivato."""
+    try:
+        result = subprocess.run(["git", "log", "-1", "--format=%h %s"], capture_output=True, text=True, timeout=5)
+        return result.stdout.strip() or "sconosciuta"
+    except (OSError, subprocess.SubprocessError):
+        return "sconosciuta"
+
+
 def main() -> None:
     config = load_config()
     discord.utils.setup_logging(level=logging.INFO)
+    logging.info("Versione del bot: %s", version())
     RemixBot(config).run(config.token, log_handler=None)
 
 
