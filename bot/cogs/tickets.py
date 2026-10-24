@@ -72,14 +72,19 @@ def find_open_ticket(guild: discord.Guild, user_id: int) -> discord.TextChannel 
     return None
 
 
-def find_ticket_category(guild: discord.Guild, category_id: int | None, name: str) -> discord.CategoryChannel | None:
-    """La categoria dei ticket: per ID se impostato, altrimenti la prima il cui nome contiene `name`."""
+def find_ticket_category(
+    guild: discord.Guild, category_id: int | None, name: str, panel_category: discord.CategoryChannel | None = None
+) -> discord.CategoryChannel | None:
+    """La categoria dei ticket: per ID, poi per nome, altrimenti la stessa categoria del canale del pannello."""
     if category_id:
         category = guild.get_channel(category_id)
-        return category if isinstance(category, discord.CategoryChannel) else None
+        if isinstance(category, discord.CategoryChannel):
+            return category
     if name:
-        return next((category for category in guild.categories if name.lower() in category.name.lower()), None)
-    return None
+        match = next((category for category in guild.categories if name.lower() in category.name.lower()), None)
+        if match:
+            return match
+    return panel_category
 
 
 def is_staff(member: discord.Member, channel: discord.abc.GuildChannel, staff_role_ids: tuple[int, ...]) -> bool:
@@ -148,7 +153,9 @@ class TicketForm(discord.ui.Modal):
         staff_roles = [role for role in map(guild.get_role, config.staff_role_ids) if role]
         for role in staff_roles:
             overwrites[role] = discord.PermissionOverwrite(view_channel=True, send_messages=True, attach_files=True, read_message_history=True)
-        category = find_ticket_category(guild, config.ticket_category_id, config.ticket_category_name)
+        category = find_ticket_category(
+            guild, config.ticket_category_id, config.ticket_category_name, getattr(interaction.channel, "category", None)
+        )
 
         channel = await guild.create_text_channel(
             ticket_channel_name(user.name, kind.prefix),

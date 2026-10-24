@@ -11,7 +11,7 @@ DEFAULTS = {
     "STAFF_ROLE_ID": "1457200870046302489,1490482020969873479,1440015751028281475,1473345415737905235",
     "MANAGER_ROLE_ID": "1457200870046302489",  # chi può usare la dashboard dei messaggi (oltre al proprietario)
     "TICKET_CATEGORY_ID": "",
-    "TICKET_CATEGORY_NAME": "ticket",  # senza ID, i ticket vanno nella prima categoria che contiene questa parola
+    "TICKET_CATEGORY_NAME": "",  # senza ID: la prima categoria che contiene questa parola; vuoto = categoria del pannello
     "COMING_SOON": "1",  # il giorno dell'apertura: mettere "0"
 }
 

@@ -76,3 +76,6 @@ def test_find_ticket_category_by_name():
     assert find_ticket_category(guild, None, "TICKET") is tickets
     assert find_ticket_category(guild, None, "assente") is None
     assert find_ticket_category(guild, None, "") is None
+    assert find_ticket_category(guild, None, "", general) is general
+    assert find_ticket_category(guild, None, "assente", general) is general
+    assert find_ticket_category(guild, None, "ticket", general) is tickets
