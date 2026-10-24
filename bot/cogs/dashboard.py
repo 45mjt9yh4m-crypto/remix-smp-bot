@@ -12,19 +12,19 @@ from discord.ext import commands
 from bot import brand
 
 COLORS = {
-    "teal": ("Verde acqua (Remix)", brand.TEAL),
-    "blue": ("Blu", brand.BLUE),
-    "purple": ("Viola", brand.PURPLE),
-    "green": ("Verde", brand.GREEN),
-    "orange": ("Arancione", brand.ORANGE),
-    "red": ("Rosso", brand.RED),
+    "teal": ("Teal (Remix)", brand.TEAL),
+    "blue": ("Blue", brand.BLUE),
+    "purple": ("Purple", brand.PURPLE),
+    "green": ("Green", brand.GREEN),
+    "orange": ("Orange", brand.ORANGE),
+    "red": ("Red", brand.RED),
 }
 IMAGES = {
-    "logo": "Logo piccolo in alto a destra",
-    "banner": "Banner grande Remix SMP",
-    "none": "Nessuna immagine",
+    "logo": "Small logo in the top right",
+    "banner": "Big Remix SMP banner",
+    "none": "No image",
 }
-MENTIONS = {"none": "Nessuna menzione", "everyone": "@everyone", "here": "@here"}
+MENTIONS = {"none": "No mention", "everyone": "@everyone", "here": "@here"}
 
 
 @dataclass(frozen=True)
@@ -60,31 +60,31 @@ def _select(options: dict, chosen: str, label_of=lambda value: value) -> discord
 
 class AnnouncementForm(discord.ui.Modal):
     def __init__(self, bot: commands.Bot, draft: Draft | None = None):
-        super().__init__(title="Nuovo messaggio · Remix SMP")
+        super().__init__(title="New message · Remix SMP")
         self.bot = bot
         draft = draft or Draft(title="", text="")
-        self.title_input = discord.ui.TextInput(placeholder="Es. 🎉 Evento di sabato!", default=draft.title or None, max_length=256)
+        self.title_input = discord.ui.TextInput(placeholder="E.g. 🎉 Saturday event!", default=draft.title or None, max_length=256)
         self.text_input = discord.ui.TextInput(
             style=discord.TextStyle.paragraph,
-            placeholder="Il testo del messaggio. Puoi usare **grassetto**, elenchi e link.",
+            placeholder="The message text. You can use **bold**, lists and links.",
             default=draft.text or None,
             max_length=4000,
         )
         self.color_select = _select(COLORS, draft.color, lambda value: value[0])
         self.image_select = _select(IMAGES, draft.image)
         self.url_input = discord.ui.TextInput(
-            placeholder="https://... (facoltativo, sostituisce l'immagine scelta sopra)", default=draft.image_url or None, required=False, max_length=500
+            placeholder="https://... (optional, replaces the image chosen above)", default=draft.image_url or None, required=False, max_length=500
         )
-        self.add_item(discord.ui.Label(text="Titolo", component=self.title_input))
-        self.add_item(discord.ui.Label(text="Testo", component=self.text_input))
-        self.add_item(discord.ui.Label(text="Colore", component=self.color_select))
-        self.add_item(discord.ui.Label(text="Immagine", component=self.image_select))
-        self.add_item(discord.ui.Label(text="Link immagine personalizzata", component=self.url_input))
+        self.add_item(discord.ui.Label(text="Title", component=self.title_input))
+        self.add_item(discord.ui.Label(text="Text", component=self.text_input))
+        self.add_item(discord.ui.Label(text="Color", component=self.color_select))
+        self.add_item(discord.ui.Label(text="Image", component=self.image_select))
+        self.add_item(discord.ui.Label(text="Custom image link", component=self.url_input))
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         url = self.url_input.value.strip()
         if url and not url.startswith(("http://", "https://")):
-            await interaction.response.send_message("Il link dell'immagine deve iniziare con https://", ephemeral=True)
+            await interaction.response.send_message("The image link must start with https://", ephemeral=True)
             return
         draft = Draft(
             title=self.title_input.value.strip(),
@@ -109,31 +109,31 @@ class AnnouncementPreview(discord.ui.View):
     async def show(self, interaction: discord.Interaction) -> None:
         embed = build_announcement(self.draft)
         await interaction.response.send_message(
-            "👀 **Anteprima** (la vedi solo tu). Scegli il canale e premi **Invia**.",
+            "👀 **Preview** (only you can see it). Pick the channel and press **Send**.",
             embed=embed,
             files=brand.files(embed),
             view=self,
             ephemeral=True,
         )
 
-    @discord.ui.select(cls=discord.ui.ChannelSelect, placeholder="📍 In quale canale lo mando?", channel_types=[discord.ChannelType.text, discord.ChannelType.news])
+    @discord.ui.select(cls=discord.ui.ChannelSelect, placeholder="📍 Which channel should I send it to?", channel_types=[discord.ChannelType.text, discord.ChannelType.news])
     async def pick_channel(self, interaction: discord.Interaction, select: discord.ui.ChannelSelect) -> None:
         self.channel = select.values[0]
         await interaction.response.defer()
 
-    @discord.ui.select(placeholder="🔔 Menzione: nessuna", options=[discord.SelectOption(label=label, value=key) for key, label in MENTIONS.items()])
+    @discord.ui.select(placeholder="🔔 Mention: none", options=[discord.SelectOption(label=label, value=key) for key, label in MENTIONS.items()])
     async def pick_mention(self, interaction: discord.Interaction, select: discord.ui.Select) -> None:
         self.mention = select.values[0]
         await interaction.response.defer()
 
-    @discord.ui.button(label="Invia", emoji="📤", style=discord.ButtonStyle.success)
+    @discord.ui.button(label="Send", emoji="📤", style=discord.ButtonStyle.success)
     async def send(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if self.channel is None:
-            await interaction.response.send_message("Scegli prima il canale dal menu 📍.", ephemeral=True)
+            await interaction.response.send_message("Pick the channel from the 📍 menu first.", ephemeral=True)
             return
         channel = interaction.guild.get_channel(self.channel.id)
         if channel is None or not channel.permissions_for(interaction.guild.me).send_messages:
-            await interaction.response.send_message(f"Non posso scrivere in {self.channel.mention}: controlla i permessi del bot.", ephemeral=True)
+            await interaction.response.send_message(f"I can't post in {self.channel.mention}: check the bot's permissions.", ephemeral=True)
             return
         embed = build_announcement(self.draft)
         message = await channel.send(
@@ -143,17 +143,17 @@ class AnnouncementPreview(discord.ui.View):
             allowed_mentions=discord.AllowedMentions(everyone=self.mention != "none"),
         )
         self.stop()
-        await interaction.response.edit_message(content=f"✅ Messaggio inviato in {channel.mention}: {message.jump_url}", embed=None, attachments=[], view=None)
+        await interaction.response.edit_message(content=f"✅ Message sent in {channel.mention}: {message.jump_url}", embed=None, attachments=[], view=None)
 
-    @discord.ui.button(label="Modifica", emoji="✏️", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Edit", emoji="✏️", style=discord.ButtonStyle.secondary)
     async def edit(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.stop()
         await interaction.response.send_modal(AnnouncementForm(self.bot, self.draft))
 
-    @discord.ui.button(label="Annulla", emoji="✖️", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="Cancel", emoji="✖️", style=discord.ButtonStyle.danger)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.stop()
-        await interaction.response.edit_message(content="Messaggio annullato.", embed=None, attachments=[], view=None)
+        await interaction.response.edit_message(content="Message cancelled.", embed=None, attachments=[], view=None)
 
 
 class DashboardPanel(discord.ui.View):
@@ -163,21 +163,21 @@ class DashboardPanel(discord.ui.View):
         super().__init__(timeout=None)
         self.bot = bot
 
-    @discord.ui.button(label="Nuovo messaggio", emoji="📢", style=discord.ButtonStyle.primary, custom_id="remix:dashboard:new")
+    @discord.ui.button(label="New message", emoji="📢", style=discord.ButtonStyle.primary, custom_id="remix:dashboard:new")
     async def new_message(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not is_manager(interaction.user, self.bot.config.manager_role_ids):
-            await interaction.response.send_message("Solo il proprietario e i manager possono usare la dashboard.", ephemeral=True)
+            await interaction.response.send_message("Only the owner and managers can use the dashboard.", ephemeral=True)
             return
         await interaction.response.send_modal(AnnouncementForm(self.bot))
 
 
 def panel_embed() -> discord.Embed:
     return brand.embed(
-        "📢 Dashboard messaggi",
-        "Da qui puoi far mandare al bot un messaggio con la grafica del Remix SMP in qualsiasi canale.\n\n"
-        "**1.** Premi **Nuovo messaggio** e scrivi titolo e testo\n"
-        "**2.** Scegli colore e immagine\n"
-        "**3.** Controlla l'anteprima, scegli il canale e premi **Invia**",
+        "📢 Message dashboard",
+        "From here you can have the bot send a Remix SMP styled message to any channel.\n\n"
+        "**1.** Press **New message** and write the title and text\n"
+        "**2.** Pick the color and image\n"
+        "**3.** Check the preview, pick the channel and press **Send**",
         brand.PURPLE,
     )
 
@@ -189,7 +189,7 @@ class Dashboard(commands.Cog):
     async def cog_load(self) -> None:
         self.bot.add_view(DashboardPanel(self.bot))
 
-    @app_commands.command(name="dashboard-setup", description="Crea il canale privato della dashboard messaggi (proprietario e manager)")
+    @app_commands.command(name="dashboard-setup", description="Create the private message dashboard channel (owner and managers)")
     @app_commands.default_permissions(administrator=True)
     @app_commands.guild_only()
     async def dashboard_setup(self, interaction: discord.Interaction) -> None:
@@ -201,10 +201,10 @@ class Dashboard(commands.Cog):
         for role in map(guild.get_role, self.bot.config.manager_role_ids):
             if role:
                 overwrites[role] = discord.PermissionOverwrite(view_channel=True, read_message_history=True, send_messages=True)
-        channel = await guild.create_text_channel("📢・dashboard", overwrites=overwrites, reason=f"Dashboard creata da {interaction.user}")
+        channel = await guild.create_text_channel("📢・dashboard", overwrites=overwrites, reason=f"Dashboard created by {interaction.user}")
         embed = panel_embed()
         await channel.send(embed=embed, files=brand.files(embed), view=DashboardPanel(self.bot))
-        await interaction.response.send_message(f"✅ Dashboard creata: {channel.mention}", ephemeral=True)
+        await interaction.response.send_message(f"✅ Dashboard created: {channel.mention}", ephemeral=True)
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -19,7 +19,7 @@ def format_players(online: int, maximum: int, names: list[str]) -> str:
     if names:
         shown = ", ".join(sorted(names)[:15])
         extra = online - min(len(names), 15)
-        text += f"\n{shown}" + (f" e altri {extra}" if extra > 0 else "")
+        text += f"\n{shown}" + (f" and {extra} more" if extra > 0 else "")
     return text
 
 
@@ -43,11 +43,11 @@ class Status(commands.Cog):
     @tasks.loop(minutes=2)
     async def update_presence(self) -> None:
         if self.coming_soon:
-            await self.bot.change_presence(status=discord.Status.online, activity=discord.Game("🚀 Apertura a breve!"))
+            await self.bot.change_presence(status=discord.Status.online, activity=discord.Game("🚀 Opening soon!"))
             return
         try:
             status = await self.fetch()
-            activity = discord.Game(f"{status.players.online}/{status.players.max} online su Remix SMP")
+            activity = discord.Game(f"{status.players.online}/{status.players.max} online on Remix SMP")
             await self.bot.change_presence(status=discord.Status.online, activity=activity)
         except Exception as error:
             log.warning("Server Minecraft non raggiungibile: %s", error)
@@ -59,9 +59,9 @@ class Status(commands.Cog):
 
     def coming_soon_embed(self) -> discord.Embed:
         embed = brand.embed(
-            "🚀 Apertura a breve!",
-            "Il **Remix SMP** non è ancora aperto, ma manca poco.\n"
-            "Tieni d'occhio gli annunci per non perderti la data di lancio!",
+            "🚀 Opening soon!",
+            "**Remix SMP** isn't open yet, but it's coming soon.\n"
+            "Keep an eye on the announcements so you don't miss the launch date!",
             brand.PURPLE,
             thumbnail=None,
             image="banner.png",
@@ -70,28 +70,28 @@ class Status(commands.Cog):
             embed.add_field(name="🌐 IP", value=f"`{self.address}`")
         return embed
 
-    @app_commands.command(name="status", description="Mostra lo stato del server Minecraft Remix SMP")
+    @app_commands.command(name="status", description="Show the status of the Remix SMP Minecraft server")
     async def status(self, interaction: discord.Interaction) -> None:
         if self.coming_soon:
             embed = self.coming_soon_embed()
             await interaction.response.send_message(embed=embed, files=brand.files(embed))
             return
         if not self.address:
-            await interaction.response.send_message("MC_ADDRESS non è configurato.", ephemeral=True)
+            await interaction.response.send_message("MC_ADDRESS is not configured.", ephemeral=True)
             return
         await interaction.response.defer()
         try:
             status = await self.fetch()
         except Exception:
-            embed = brand.embed("🔴 Server offline", "Il **Remix SMP** al momento non è raggiungibile. Riprova tra poco!", brand.RED)
+            embed = brand.embed("🔴 Server offline", "**Remix SMP** can't be reached right now. Try again in a bit!", brand.RED)
             embed.add_field(name="🌐 IP", value=f"`{self.address}`")
             await interaction.followup.send(embed=embed, files=brand.files(embed))
             return
         names = [p.name for p in (status.players.sample or [])]
-        embed = brand.embed("🟢 Server online", "Il **Remix SMP** è aperto: entra a giocare!", brand.GREEN)
-        embed.add_field(name="👥 Giocatori", value=format_players(status.players.online, status.players.max, names), inline=False)
+        embed = brand.embed("🟢 Server online", "**Remix SMP** is open: jump in and play!", brand.GREEN)
+        embed.add_field(name="👥 Players", value=format_players(status.players.online, status.players.max, names), inline=False)
         embed.add_field(name="🌐 IP", value=f"`{self.address}`")
-        embed.add_field(name="🧩 Versione", value=status.version.name)
+        embed.add_field(name="🧩 Version", value=status.version.name)
         embed.add_field(name="📶 Ping", value=f"{round(status.latency)} ms")
         await interaction.followup.send(embed=embed, files=brand.files(embed))
 

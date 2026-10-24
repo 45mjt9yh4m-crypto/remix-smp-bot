@@ -1,5 +1,7 @@
 # Remix SMP Bot
 
+Tutti i testi che vedono gli utenti su Discord sono in inglese; le scritte nella console restano in italiano.
+
 Bot Discord per il server Minecraft **Remix SMP**, scritto in Python con `discord.py`.
 
 | Comando | Chi lo vede | Cosa fa |
@@ -8,15 +10,15 @@ Bot Discord per il server Minecraft **Remix SMP**, scritto in Python con `discor
 | `/kick`, `/ban` | chi può espellere o bannare | Espelle o banna un utente, con motivo facoltativo |
 | `/timeout`, `/untimeout` | chi può silenziare | Silenzia un utente per N minuti, o toglie il timeout |
 | `/clear` | chi può gestire i messaggi | Cancella gli ultimi 1–100 messaggi del canale |
-| `/ticket-panel` | admin | Pubblica il pannello ticket con tre bottoni: 🛠️ Supporto, 🚨 Segnala un giocatore, 🐛 Bug. Ogni bottone apre un modulo obbligatorio (nick, Java/Bedrock, domande) prima di creare il ticket |
-| `/parole aggiungi`, `/parole rimuovi`, `/parole lista` | chi può gestire il server | Filtro parole: i messaggi con parole vietate vengono cancellati e l'autore va in timeout (`FILTER_TIMEOUT_MINUTES`, predefinito 5). Lo staff con "Gestisci messaggi" non viene filtrato. Serve **Message Content Intent** attivo nel Developer Portal |
+| `/ticket-panel` | admin | Pubblica il pannello ticket con tre bottoni: 🛠️ Support, 🚨 Report a player, 🐛 Bug. Ogni bottone apre un modulo obbligatorio (nick, Java/Bedrock, domande) prima di creare il ticket |
+| `/words add`, `/words remove`, `/words list` | chi può gestire il server | Filtro parole: i messaggi con parole vietate vengono cancellati e l'autore va in timeout (`FILTER_TIMEOUT_MINUTES`, predefinito 5). Lo staff con "Gestisci messaggi" non viene filtrato. Serve **Message Content Intent** attivo nel Developer Portal |
 | `/dashboard-setup` | admin | Crea `📢・dashboard`, canale privato per proprietario e manager, con il pannello per far mandare al bot messaggi personalizzati in qualsiasi canale |
 
-Lo stato del bot ("12/50 online su Remix SMP") si aggiorna da solo ogni 2 minuti.
+Lo stato del bot ("12/50 online on Remix SMP") si aggiorna da solo ogni 2 minuti.
 
 Tutti i messaggi hanno la grafica del Remix SMP: logo, colori del brand e piè di pagina `Remix SMP • remixsmp.net`
 (immagini in `assets/`, colori in `bot/brand.py`). I messaggi di moderazione mostrano la foto profilo dell'utente
-e l'utente viene avvisato in privato. Nei ticket lo staff può premere **Prendi in carico**.
+e l'utente viene avvisato in privato. Nei ticket lo staff può premere **Claim**.
 Al primo avvio il bot si imposta da solo il logo come foto profilo.
 
 ## 1. Crea il bot su Discord (si fa tutto da Safari)
@@ -49,7 +51,7 @@ Copia `.env.example` in un file chiamato `.env` e compila i campi:
 - `TICKET_CATEGORY_NAME`: se non c'è l'ID, i ticket vanno nella prima categoria che contiene questa parola.
   Senza ID né nome, i ticket vanno nella stessa categoria del canale in cui c'è il pannello
 - `MANAGER_ROLE_ID`: i ruoli che possono usare la dashboard dei messaggi, separati da virgola (il proprietario e gli amministratori possono sempre)
-- `COMING_SOON`: metti `1` finché il server non è aperto. Il bot mostra "🚀 Apertura a breve!" invece di "offline". Il giorno del lancio cancellala.
+- `COMING_SOON`: metti `1` finché il server non è aperto. Il bot mostra "🚀 Opening soon!" invece di "offline". Il giorno del lancio cancellala.
 
 ## 3. Mettilo online (hosting gratuito)
 

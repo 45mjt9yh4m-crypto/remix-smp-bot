@@ -29,16 +29,16 @@ def test_embed_attaches_only_used_assets():
 
 
 def test_action_embed_has_user_avatar_and_fields():
-    embed = action_embed("🔨 Utente bannato", brand.RED, FakeUser, FakeUser, None, "1 h")
+    embed = action_embed("🔨 User banned", brand.RED, FakeUser, FakeUser, None, "1 h")
     assert embed.thumbnail.url == FakeUser.display_avatar.url
-    assert [field.name for field in embed.fields] == ["👤 Utente", "🛡️ Staff", "⏱️ Durata", "📝 Motivo"]
-    assert embed.fields[-1].value == "Nessun motivo indicato"
+    assert [field.name for field in embed.fields] == ["👤 User", "🛡️ Staff", "⏱️ Duration", "📝 Reason"]
+    assert embed.fields[-1].value == "No reason given"
 
 
 def test_format_duration():
     assert format_duration(5) == "5 min"
     assert format_duration(90) == "1 h 30 min"
-    assert format_duration(2 * 24 * 60 + 60) == "2 g 1 h"
+    assert format_duration(2 * 24 * 60 + 60) == "2 d 1 h"
 
 
 def test_ticket_views_have_persistent_buttons():

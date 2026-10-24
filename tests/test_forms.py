@@ -16,7 +16,7 @@ def test_ticket_form_always_asks_nick_and_edition():
     for kind in KINDS:
         form = run(lambda: TicketForm(bot=None, kind=kind))
         labels = [item.text for item in form.children]
-        assert labels[:2] == ["Il tuo nick in gioco", "Con cosa giochi?"]
+        assert labels[:2] == ["Your in-game nickname", "What do you play on?"]
         assert len(labels) == 2 + len(kind.questions) <= 5
         assert form.nick.required and form.edition.required
         assert [option.value for option in form.edition.options] == ["Java", "Bedrock"]

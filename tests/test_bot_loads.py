@@ -16,4 +16,4 @@ def test_all_cogs_load_and_register_commands():
         return names
 
     names = asyncio.run(run())
-    assert names == {"status", "kick", "ban", "timeout", "untimeout", "clear", "ticket-panel", "dashboard-setup", "parole"}
+    assert names == {"status", "kick", "ban", "timeout", "untimeout", "clear", "ticket-panel", "dashboard-setup", "words"}

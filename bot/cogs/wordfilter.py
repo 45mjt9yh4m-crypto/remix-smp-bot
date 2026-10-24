@@ -1,6 +1,6 @@
 """Filtro parole: cancella i messaggi con parole vietate e mette in timeout chi le scrive.
 
-Le parole si gestiscono da Discord con /parole e sono salvate in data/parole.json sul server
+Le parole si gestiscono da Discord con /words e sono salvate in data/parole.json sul server
 (fuori da git, quindi gli aggiornamenti del bot non le toccano). Lo staff che può gestire
 i messaggi non viene filtrato. Serve l'intent "Message Content" attivo nel Developer Portal.
 """
@@ -67,9 +67,9 @@ def save_words(words: list[str], path: Path = WORDS_FILE) -> None:
 
 
 class WordFilter(commands.Cog):
-    parole = app_commands.Group(
-        name="parole",
-        description="Gestisci le parole vietate",
+    words_group = app_commands.Group(
+        name="words",
+        description="Manage the banned words",
         default_permissions=discord.Permissions(manage_guild=True),
         guild_only=True,
     )
@@ -103,19 +103,19 @@ class WordFilter(commands.Cog):
         duration = format_duration(self.timeout_minutes) if self.timeout_minutes else None
         if self.timeout_minutes:
             try:
-                await author.timeout(timedelta(minutes=self.timeout_minutes), reason=f"Filtro parole: {word}")
+                await author.timeout(timedelta(minutes=self.timeout_minutes), reason=f"Word filter: {word}")
             except discord.HTTPException as error:
                 log.warning("Non riesco a mettere in timeout %s: %s", author, error)
                 duration = None
         embed = brand.embed(
-            "🚫 Messaggio rimosso",
-            f"{author.mention}, nel **Remix SMP** non si usano certe parole."
-            + (f"\nSei in timeout per **{duration}**." if duration else ""),
+            "🚫 Message removed",
+            f"{author.mention}, that kind of language isn't allowed on **Remix SMP**."
+            + (f"\nYou are timed out for **{duration}**." if duration else ""),
             brand.RED,
             thumbnail=author.display_avatar.url,
         )
         await message.channel.send(embed=embed, files=brand.files(embed), delete_after=10)
-        await notify(author, "🚫 Hai scritto una parola vietata", brand.RED, f"Parola vietata in #{message.channel.name}", duration)
+        await notify(author, "🚫 You used a banned word", brand.RED, f"Banned word in #{message.channel.name}", duration)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -126,34 +126,34 @@ class WordFilter(commands.Cog):
         if before.content != after.content:
             await self.check(after)
 
-    @parole.command(name="aggiungi", description="Vieta una parola (metti * in fondo per vietare anche le varianti)")
-    async def add(self, interaction: discord.Interaction, parola: app_commands.Range[str, 2, 50]) -> None:
-        parola = parola.strip().lower()
-        if parola in self.words:
-            await interaction.response.send_message(f"`{parola}` è già vietata.", ephemeral=True)
+    @words_group.command(name="add", description="Ban a word (put * at the end to ban its variants too)")
+    async def add(self, interaction: discord.Interaction, word: app_commands.Range[str, 2, 50]) -> None:
+        word = word.strip().lower()
+        if word in self.words:
+            await interaction.response.send_message(f"`{word}` is already banned.", ephemeral=True)
             return
-        self.words = sorted({*self.words, parola})
+        self.words = sorted({*self.words, word})
         save_words(self.words)
-        await interaction.response.send_message(f"✅ `{parola}` aggiunta alle parole vietate ({len(self.words)} in tutto).", ephemeral=True)
+        await interaction.response.send_message(f"✅ `{word}` added to the banned words ({len(self.words)} in total).", ephemeral=True)
 
-    @parole.command(name="rimuovi", description="Toglie una parola dalla lista delle parole vietate")
-    async def remove(self, interaction: discord.Interaction, parola: str) -> None:
-        parola = parola.strip().lower()
-        if parola not in self.words:
-            await interaction.response.send_message(f"`{parola}` non è nella lista.", ephemeral=True)
+    @words_group.command(name="remove", description="Remove a word from the banned words")
+    async def remove(self, interaction: discord.Interaction, word: str) -> None:
+        word = word.strip().lower()
+        if word not in self.words:
+            await interaction.response.send_message(f"`{word}` isn't in the list.", ephemeral=True)
             return
-        self.words = [word for word in self.words if word != parola]
+        self.words = [item for item in self.words if item != word]
         save_words(self.words)
-        await interaction.response.send_message(f"🗑️ `{parola}` rimossa dalle parole vietate.", ephemeral=True)
+        await interaction.response.send_message(f"🗑️ `{word}` removed from the banned words.", ephemeral=True)
 
-    @remove.autocomplete("parola")
+    @remove.autocomplete("word")
     async def remove_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         return [app_commands.Choice(name=word, value=word) for word in self.words if current.lower() in word][:25]
 
-    @parole.command(name="lista", description="Mostra le parole vietate (lo vedi solo tu)")
+    @words_group.command(name="list", description="Show the banned words (only you can see it)")
     async def list_words(self, interaction: discord.Interaction) -> None:
-        text = ", ".join(f"`{word}`" for word in self.words) or "Nessuna parola vietata per ora."
-        embed = brand.embed("🚫 Parole vietate", text[:4000], brand.RED, thumbnail=None)
+        text = ", ".join(f"`{word}`" for word in self.words) or "No banned words yet."
+        embed = brand.embed("🚫 Banned words", text[:4000], brand.RED, thumbnail=None)
         await interaction.response.send_message(embed=embed, files=brand.files(embed), ephemeral=True)
 
 
