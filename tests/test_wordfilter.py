@@ -1,4 +1,4 @@
-from bot.cogs.wordfilter import find_banned, load_words, normalize, save_words
+from bot.cogs.wordfilter import find_banned, normalize
 
 WORDS = ["scemo", "stupid*", "noob", "lol"]
 
@@ -15,7 +15,7 @@ def test_finds_whole_words_and_variants():
     assert find_banned("SC3M0!!", WORDS) == "scemo"
     assert find_banned("che stupida", WORDS) == "stupid*"
     assert find_banned("n o o b", WORDS) == "noob"
-    assert find_banned("l o l", WORDS) is None  # parole sotto le 4 lettere: niente controllo senza spazi
+    assert find_banned("l o l", WORDS) == "lol"
     assert find_banned("s c e m o", WORDS) == "scemo"
 
 
@@ -25,11 +25,27 @@ def test_no_false_positives():
     assert find_banned("", WORDS) is None
 
 
-def test_words_file_roundtrip(tmp_path):
-    path = tmp_path / "data" / "parole.json"
-    default = tmp_path / "iniziali.json"
-    assert load_words(path, default) == []
-    default.write_text('["x"]')
-    assert load_words(path, default) == ["x"]
-    save_words(["b", "a", "a"], path)
-    assert load_words(path, default) == ["a", "b"]
+def test_word_list_merges_defaults_added_and_removed(tmp_path):
+    from bot.cogs.wordfilter import WordList, write_list
+
+    default, added, removed = tmp_path / "default.json", tmp_path / "data" / "added.json", tmp_path / "data" / "removed.json"
+    write_list(["base1", "base2"], default)
+    words = WordList(default, added, removed)
+    assert words.words == ["base1", "base2"]
+    assert words.add("extra") and not words.add("extra")
+    assert words.remove("base1") and not words.remove("base1")
+    reloaded = WordList(default, added, removed)
+    assert reloaded.words == ["base2", "extra"]
+    write_list(["base1", "base2", "base3"], default)  # aggiornamento della lista di partenza
+    assert WordList(default, added, removed).words == ["base2", "base3", "extra"]
+    assert reloaded.add("base1") and WordList(default, added, removed).words == ["base1", "base2", "base3", "extra"]
+
+
+def test_default_list_blocks_user_variants():
+    from bot.cogs.wordfilter import DEFAULT_WORDS_FILE, read_list
+
+    words = read_list(DEFAULT_WORDS_FILE)
+    for text in ["nigga", "NIGGERS", "n1gers", "n1.g3rs", "nig3rs", "niggass", "n igga", "n i g g e r", "niiiigger", "ni99a", "you nig", "ngers"]:
+        assert find_banned(text, words), text
+    for text in ["good night", "nice game gg", "I'm from Nigeria", "ciao a tutti", "spicy food", "raccoon", "Pakistan"]:
+        assert find_banned(text, words) is None, text
