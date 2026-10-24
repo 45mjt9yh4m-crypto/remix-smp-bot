@@ -12,7 +12,8 @@ DEFAULTS = {
     "MANAGER_ROLE_ID": "1457200870046302489",  # chi può usare la dashboard dei messaggi (oltre al proprietario)
     "TICKET_CATEGORY_ID": "",
     "TICKET_CATEGORY_NAME": "ticket",  # senza ID: la prima categoria che contiene questa parola ("tickets💳")
-    "FILTER_TIMEOUT_MINUTES": "5",  # timeout per chi scrive una parola vietata (0 = solo cancellazione)
+    "FILTER_TIMEOUT_MINUTES": "5",
+    "MASS_MENTION_LIMIT": "5",  # quante persone/ruoli taggati insieme fanno una "menzione di massa" (0 = nessun limite)  # timeout per chi scrive una parola vietata (0 = solo cancellazione)
     "COMING_SOON": "1",  # il giorno dell'apertura: mettere "0"
 }
 
@@ -45,6 +46,7 @@ class Config:
     ticket_category_name: str = ""
     manager_role_ids: tuple[int, ...] = ()
     filter_timeout_minutes: int = 5
+    mass_mention_limit: int = 5
     coming_soon: bool = False
 
 
@@ -63,4 +65,5 @@ def load_config() -> Config:
         coming_soon=_flag(_env("COMING_SOON")),
         manager_role_ids=_int_list(_env("MANAGER_ROLE_ID")),
         filter_timeout_minutes=_int_or_none(_env("FILTER_TIMEOUT_MINUTES")) or 0,
+        mass_mention_limit=_int_or_none(_env("MASS_MENTION_LIMIT")) or 0,
     )

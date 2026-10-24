@@ -59,3 +59,23 @@ def test_default_list_other_languages():
         assert find_banned(text, words), text
     for text in ["ele pede ajuda", "ich bin müde", "dat is leuk", "dzień dobry", "pedale della bici", "привет как дела", "хачапури вкусный"]:
         assert find_banned(text, words) is None, text
+
+
+def test_invite_links():
+    from bot.cogs.wordfilter import has_invite
+
+    for text in ["join discord.gg/abc123", "https://discord.com/invite/xyz", "discordapp.com/invite/xyz", "discord . gg / abc", "dsc.gg/server"]:
+        assert has_invite(text), text
+    for text in ["https://youtube.com/watch?v=1", "I love discord", "remixsmp.net", "discord.com/channels/1/2"]:
+        assert not has_invite(text), text
+
+
+def test_mass_mentions():
+    from bot.cogs.wordfilter import is_mass_mention
+
+    assert is_mass_mention("hi @everyone", 0, 5)
+    assert is_mass_mention("@here look", 0, 5)
+    assert is_mass_mention("hey", 5, 5)
+    assert not is_mass_mention("hey", 4, 5)
+    assert not is_mass_mention("my email is me@everyonemail.com", 0, 5)
+    assert not is_mass_mention("hey", 50, 0)

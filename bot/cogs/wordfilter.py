@@ -1,4 +1,5 @@
-"""Filtro parole: cancella i messaggi con parole vietate e mette in timeout chi le scrive.
+"""Filtro messaggi: cancella i messaggi con parole vietate, inviti ad altri server Discord
+o menzioni di massa, e mette in timeout chi li scrive.
 
 Le parole si gestiscono da Discord con /words e sono salvate in data/parole.json sul server
 (fuori da git, quindi gli aggiornamenti del bot non le toccano). Lo staff che può gestire
@@ -25,6 +26,8 @@ WORDS_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "parole.js
 REMOVED_FILE = WORDS_FILE.with_name("parole_rimosse.json")
 # Lista di partenza nel codice: sempre attiva, tranne le parole tolte con /words remove.
 DEFAULT_WORDS_FILE = Path(__file__).resolve().parent.parent / "parole_iniziali.json"
+INVITE = re.compile(r"(discord(?:app)?\s*\.\s*(?:gg|com\s*/\s*invite|me)|dsc\s*\.\s*gg|discord\s*\.\s*io)\s*/\s*\w+", re.IGNORECASE)
+EVERYONE = re.compile(r"@(everyone|here)\b")
 LEET = str.maketrans({"0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "9": "g", "@": "a", "$": "s"})
 
 
@@ -52,6 +55,24 @@ def find_banned(text: str, words: list[str]) -> str | None:
         if re.search(pattern, clean) or re.search(pattern, joined):
             return word
     return None
+
+
+def has_invite(text: str) -> bool:
+    """Un link di invito a un server Discord (discord.gg/..., discord.com/invite/..., ecc.)."""
+    return INVITE.search(text) is not None
+
+
+def is_mass_mention(text: str, mentioned: int, limit: int) -> bool:
+    """@everyone/@here, oppure `limit` o più persone e ruoli taggati nello stesso messaggio."""
+    return EVERYONE.search(text) is not None or (limit > 0 and mentioned >= limit)
+
+
+# Per ogni tipo di violazione: motivo del timeout, testo nel canale, titolo e motivo del messaggio privato.
+VIOLATIONS = {
+    "word": ("Word filter", "that kind of language isn't allowed on **Remix SMP**.", "🚫 You used a banned word", "Banned word"),
+    "invite": ("Invite link", "invite links to other Discord servers aren't allowed on **Remix SMP**.", "🚫 You posted an invite link", "Invite link to another server"),
+    "mention": ("Mass mention", "mass mentions aren't allowed on **Remix SMP**.", "🚫 You mentioned too many people", "Mass mention"),
+}
 
 
 def read_list(path: Path) -> list[str]:
@@ -114,6 +135,7 @@ class WordFilter(commands.Cog):
         self.bot = bot
         self.word_list = WordList()
         self.timeout_minutes = bot.config.filter_timeout_minutes
+        self.mention_limit = bot.config.mass_mention_limit
 
     def exempt(self, message: discord.Message) -> bool:
         author = message.author
@@ -124,35 +146,47 @@ class WordFilter(commands.Cog):
             or message.channel.permissions_for(author).manage_messages
         )
 
+    def violation(self, message: discord.Message) -> tuple[str, str] | None:
+        """Il tipo di violazione e il dettaglio per il log, oppure None se il messaggio va bene."""
+        word = find_banned(message.content, self.word_list.words)
+        if word:
+            return "word", word
+        if has_invite(message.content):
+            return "invite", "invite"
+        mentioned = len({user.id for user in message.mentions if not user.bot}) + len(message.role_mentions)
+        if is_mass_mention(message.content, mentioned, self.mention_limit):
+            return "mention", f"{mentioned} mentions"
+        return None
+
     async def check(self, message: discord.Message) -> None:
-        words = self.word_list.words
-        if not words or self.exempt(message):
+        if self.exempt(message):
             return
-        word = find_banned(message.content, words)
-        if word is None:
+        found = self.violation(message)
+        if found is None:
             return
+        kind, detail = found
+        audit_reason, channel_text, dm_title, dm_reason = VIOLATIONS[kind]
         author = message.author
         try:
             await message.delete()
         except discord.HTTPException as error:
-            log.warning("Non riesco a cancellare un messaggio con parola vietata: %s", error)
+            log.warning("Non riesco a cancellare un messaggio da filtrare: %s", error)
             return
         duration = format_duration(self.timeout_minutes) if self.timeout_minutes else None
         if self.timeout_minutes:
             try:
-                await author.timeout(timedelta(minutes=self.timeout_minutes), reason=f"Word filter: {word}")
+                await author.timeout(timedelta(minutes=self.timeout_minutes), reason=f"{audit_reason}: {detail}")
             except discord.HTTPException as error:
                 log.warning("Non riesco a mettere in timeout %s: %s", author, error)
                 duration = None
         embed = brand.embed(
             "🚫 Message removed",
-            f"{author.mention}, that kind of language isn't allowed on **Remix SMP**."
-            + (f"\nYou are timed out for **{duration}**." if duration else ""),
+            f"{author.mention}, {channel_text}" + (f"\nYou are timed out for **{duration}**." if duration else ""),
             brand.RED,
             thumbnail=author.display_avatar.url,
         )
         await message.channel.send(embed=embed, files=brand.files(embed), delete_after=10)
-        await notify(author, "🚫 You used a banned word", brand.RED, f"Banned word in #{message.channel.name}", duration)
+        await notify(author, dm_title, brand.RED, f"{dm_reason} in #{message.channel.name}", duration)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
