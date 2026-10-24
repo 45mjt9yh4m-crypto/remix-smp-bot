@@ -49,3 +49,13 @@ def test_default_list_blocks_user_variants():
         assert find_banned(text, words), text
     for text in ["good night", "nice game gg", "I'm from Nigeria", "ciao a tutti", "spicy food", "raccoon", "Pakistan"]:
         assert find_banned(text, words) is None, text
+
+
+def test_default_list_other_languages():
+    from bot.cogs.wordfilter import DEFAULT_WORDS_FILE, read_list
+
+    words = read_list(DEFAULT_WORDS_FILE)
+    for text in ["maricón", "eres un sudaca", "seu viado", "sale bougnoule", "Schwuchtel", "czarnuchy", "ibne", "ты пидорас", "НИГГЕР"]:
+        assert find_banned(text, words), text
+    for text in ["ele pede ajuda", "ich bin müde", "dat is leuk", "dzień dobry", "pedale della bici", "привет как дела", "хачапури вкусный"]:
+        assert find_banned(text, words) is None, text
